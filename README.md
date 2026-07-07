@@ -107,6 +107,8 @@ This template is pinned to:
 - Dropbox storage SER `98` mounted at `/mnt/dropbox`
 - single public port `8080`
 
+For gcube manifests, keep `repo: ghcr.io` and omit the registry prefix from `containerImage`. The rendered value should be `vfxceo-ai/exaone-yaho-airi:stage1`, not `ghcr.io/vfxceo-ai/exaone-yaho-airi:stage1`.
+
 Use Dropbox only for small persistent files like future voice samples or exported config. Model caches stay on the workload-local disk under `/var/cache/airi`.
 
 ## Stage 1 limitations

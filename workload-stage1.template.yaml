@@ -3,7 +3,7 @@ cuda: ""
 sharedMemory: 8
 
 containers:
-  - containerImage: "ghcr.io/${GHCR_OWNER}/exaone-yaho-airi:stage1"
+  - containerImage: "${GHCR_OWNER}/exaone-yaho-airi:stage1"
     repo: ghcr.io
     port: 8080
     maxConnection: 20
