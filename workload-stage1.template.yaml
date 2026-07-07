@@ -1,0 +1,26 @@
+description: "AIRI + EXAONE-Yaho + Korean STT stage 1"
+cuda: ""
+sharedMemory: 8
+
+containers:
+  - containerImage: "ghcr.io/${GHCR_OWNER}/exaone-yaho-airi:stage1"
+    repo: ghcr.io
+    port: 8080
+    maxConnection: 20
+    containerCommand: ""
+    isCredential: false
+    containerEnvs:
+      - API_KEY: "${API_KEY}"
+      - LLM_MODEL_ID: "ChanLumerico/EXAONE-3.5-7.8B-Instruct-Yaho"
+      - STT_MODEL_ID: "large-v3-turbo"
+      - STT_COMPUTE_TYPE: "int8_float16"
+      - STT_LANGUAGE: "ko"
+      - VLLM_GPU_MEMORY_UTILIZATION: "0.52"
+      - VLLM_MAX_MODEL_LEN: "4096"
+      - VLLM_MAX_NUM_SEQS: "1"
+      - LOG_LEVEL: "INFO"
+    userStorages:
+      - "98": "/mnt/dropbox"
+
+gpuSpecs:
+  - gpuCode: "025"

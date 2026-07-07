@@ -1,0 +1,3 @@
+fastapi==0.139.0
+python-multipart==0.0.32
+httpx2==2.5.0
