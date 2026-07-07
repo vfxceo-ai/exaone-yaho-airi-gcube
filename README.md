@@ -102,7 +102,7 @@ gcube workload register --file .\workload-stage1.private.yaml
 
 This template is pinned to:
 
-- GPU code `025`
+- GPU code `024`
 - `maxConnection: 20`
 - Dropbox storage SER `98` mounted at `/mnt/dropbox`
 - single public port `8080`

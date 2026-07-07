@@ -23,4 +23,4 @@ containers:
       - "98": "/mnt/dropbox"
 
 gpuSpecs:
-  - gpuCode: "025"
+  - gpuCode: "024"
