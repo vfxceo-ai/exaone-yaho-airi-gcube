@@ -43,6 +43,7 @@ def settings() -> Settings:
         stt_compute_type="int8_float16",
         stt_language="ko",
         log_level="INFO",
+        llm_health_url="http://127.0.0.1:8000/health",
     )
 
 

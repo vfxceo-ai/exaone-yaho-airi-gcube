@@ -40,6 +40,7 @@ class SettingsContractTests(unittest.TestCase):
         self.assertEqual(settings.stt_compute_type, "int8_float16")
         self.assertEqual(settings.stt_language, "ko")
         self.assertEqual(settings.log_level, "INFO")
+        self.assertEqual(settings.llm_health_url, "http://127.0.0.1:8000/health")
 
 
 if __name__ == "__main__":

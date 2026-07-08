@@ -3,7 +3,7 @@
 Stage 1 packages one RTX 5090 32 GB gcube workload that serves:
 
 - AIRI Stage Web at `/`
-- EXAONE-Yaho through `vLLM` at `/llm/v1/`
+- EXAONE-Yaho through `llama.cpp` GGUF at `/llm/v1/`
 - Korean STT through `faster-whisper` at `/stt/v1/`
 
 TTS is intentionally excluded from Stage 1. Voice cloning and `/tts/v1/` wait for Stage 2.
@@ -13,8 +13,8 @@ TTS is intentionally excluded from Stage 1. Voice cloning and `/tts/v1/` wait fo
 - `Dockerfile`: multi-stage AIRI build plus the GPU runtime
 - `app/`: authenticated OpenAI-compatible STT adapter
 - `nginx.conf`: same-origin routing for AIRI, LLM, and STT
-- `supervisord.conf`: process lifecycle for `nginx`, `vllm`, and `uvicorn`
-- `workload-stage1.template.yaml`: gcube manifest template for GPU `025`
+- `supervisord.conf`: process lifecycle for `nginx`, `llama-server`, and `uvicorn`
+- `workload-stage1.template.yaml`: gcube manifest template for GPU `024`
 - `scripts/render-workload.ps1`: renders a private manifest without committing secrets
 - `config/exaone-yaho.character.json`: AIRI character card bundled with this Stage 1 package
 
@@ -27,7 +27,7 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1
 python -m pip install -r requirements-test.txt
 $env:PYTHONPATH='.'
-python -m pytest tests -v
+python -m unittest discover -s tests -v
 ```
 
 Shell syntax and smoke test script:
@@ -49,16 +49,19 @@ docker build -t exaone-yaho-airi:stage1 .
 ```dotenv
 API_KEY=replace-with-a-random-url-safe-value-of-at-least-32-characters
 LLM_MODEL_ID=ChanLumerico/EXAONE-3.5-7.8B-Instruct-Yaho
+LLM_MODEL_VARIANT=Q4_K_M
+LLM_HEALTH_URL=http://127.0.0.1:8000/health
 STT_MODEL_ID=large-v3-turbo
 STT_COMPUTE_TYPE=int8_float16
 STT_LANGUAGE=ko
-VLLM_GPU_MEMORY_UTILIZATION=0.52
-VLLM_MAX_MODEL_LEN=4096
-VLLM_MAX_NUM_SEQS=1
+LLAMA_CTX_SIZE=4096
+LLAMA_N_GPU_LAYERS=99
+LLAMA_PARALLEL=1
 LOG_LEVEL=INFO
 ```
 
 `API_KEY` must be shared by both `/llm/v1/` and `/stt/v1/`.
+`LLM_MODEL_VARIANT=Q4_K_M` is the Stage 1 default for one RTX 5090 32 GB because the upstream model card publishes a GGUF build for llama.cpp and recommends the GGUF route when EXAONE architecture support is unstable in other runtimes.
 
 ## AIRI provider values
 
@@ -67,7 +70,7 @@ After the workload is running, open the AIRI UI and set:
 ```text
 Chat provider: OpenAI Compatible
 Chat base URL: https://<gcube-service-url>/llm/v1/
-Chat model: exaone-yaho
+Chat model: use the first id returned by GET /llm/v1/models
 
 Transcription provider: OpenAI Compatible
 Transcription base URL: https://<gcube-service-url>/stt/v1/
@@ -77,6 +80,7 @@ API key: the same deployment API_KEY
 ```
 
 AIRI stores provider credentials in the browser, not in the container environment.
+Because Stage 1 now uses llama.cpp GGUF instead of the old vLLM alias, do not assume the chat model id is still `exaone-yaho` until `/llm/v1/models` confirms it.
 
 To import the bundled persona:
 

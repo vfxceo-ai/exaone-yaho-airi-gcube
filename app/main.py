@@ -1,9 +1,11 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 import os
 from pathlib import Path
 import tempfile
 from typing import Annotated, Protocol
+from urllib.error import URLError
+from urllib.request import urlopen
 
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
@@ -22,7 +24,19 @@ class SttBackend(Protocol):
     def transcribe(self, path: Path, language: str) -> str: ...
 
 
-def create_app(settings: Settings, backend: SttBackend) -> FastAPI:
+def default_llm_ready_checker(url: str) -> bool:
+    try:
+        with urlopen(url, timeout=1.5) as response:
+            return 200 <= response.status < 300
+    except (OSError, URLError):
+        return False
+
+
+def create_app(
+    settings: Settings,
+    backend: SttBackend,
+    llm_ready_checker: Callable[[str], bool] = default_llm_ready_checker,
+) -> FastAPI:
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         await run_in_threadpool(backend.load)
@@ -42,7 +56,14 @@ def create_app(settings: Settings, backend: SttBackend) -> FastAPI:
 
     @application.get("/healthz")
     def healthz() -> dict[str, object]:
-        return {"service": "stt", "ready": backend.ready}
+        stt_ready = backend.ready
+        llm_ready = llm_ready_checker(settings.llm_health_url)
+        return {
+            "service": "gateway",
+            "ready": stt_ready and llm_ready,
+            "stt_ready": stt_ready,
+            "llm_ready": llm_ready,
+        }
 
     @application.get("/v1/models", dependencies=[Depends(authorized)])
     def models() -> dict[str, object]:

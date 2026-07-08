@@ -9,6 +9,7 @@ class Settings:
     stt_compute_type: str
     stt_language: str
     log_level: str
+    llm_health_url: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -22,4 +23,5 @@ class Settings:
             stt_compute_type=os.getenv("STT_COMPUTE_TYPE", "int8_float16"),
             stt_language=os.getenv("STT_LANGUAGE", "ko"),
             log_level=os.getenv("LOG_LEVEL", "INFO"),
+            llm_health_url=os.getenv("LLM_HEALTH_URL", "http://127.0.0.1:8000/health"),
         )

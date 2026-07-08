@@ -41,6 +41,7 @@ def test_settings() -> Settings:
         stt_compute_type="int8_float16",
         stt_language="ko",
         log_level="INFO",
+        llm_health_url="http://127.0.0.1:8000/health",
     )
 
 
@@ -49,7 +50,11 @@ class OpenAiCompatibleApiContractTests(unittest.TestCase):
         main = load_main_module()
         self.backend = FakeSttBackend()
         self.client_context = TestClient(
-            main.create_app(test_settings(), self.backend)
+            main.create_app(
+                test_settings(),
+                self.backend,
+                llm_ready_checker=lambda _url: True,
+            )
         )
         self.client = self.client_context.__enter__()
         self.auth_headers = {"Authorization": f"Bearer {API_KEY}"}
@@ -57,11 +62,19 @@ class OpenAiCompatibleApiContractTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.client_context.__exit__(None, None, None)
 
-    def test_health_reports_stt_readiness(self) -> None:
+    def test_health_reports_gateway_readiness(self) -> None:
         response = self.client.get("/healthz")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"service": "stt", "ready": True})
+        self.assertEqual(
+            response.json(),
+            {
+                "service": "gateway",
+                "ready": True,
+                "stt_ready": True,
+                "llm_ready": True,
+            },
+        )
 
     def test_models_requires_bearer_authentication(self) -> None:
         response = self.client.get("/v1/models")

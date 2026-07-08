@@ -27,10 +27,10 @@ RUN pnpm -F @proj-airi/stage-web run build \
     && pnpm -F @proj-airi/stage-ui run story:build \
     && mv ./packages/stage-ui/.histoire/dist ./apps/stage-web/dist/ui
 
-FROM vllm/vllm-openai:v0.24.0-cu129-ubuntu2404
+FROM ghcr.io/ggml-org/llama.cpp:server-cuda
 
 LABEL org.opencontainers.image.title="exaone-yaho-airi-stage1" \
-      org.opencontainers.image.description="AIRI, EXAONE-Yaho vLLM, and Korean faster-whisper STT for gcube" \
+      org.opencontainers.image.description="AIRI, EXAONE-Yaho llama.cpp GGUF, and Korean faster-whisper STT for gcube" \
       org.opencontainers.image.source="https://github.com/vfxceo-ai/exaone-yaho-airi-gcube" \
       org.opencontainers.image.licenses="Apache-2.0 AND MIT AND LicenseRef-EXAONE-AI-Model-License-1.1-NC"
 
@@ -38,23 +38,23 @@ USER root
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     HF_HOME=/var/cache/airi/huggingface \
+    HF_HUB_CACHE=/var/cache/airi/huggingface/hub \
     XDG_CACHE_HOME=/var/cache/airi \
     LLM_MODEL_ID=ChanLumerico/EXAONE-3.5-7.8B-Instruct-Yaho \
+    LLM_MODEL_VARIANT=Q4_K_M \
+    LLM_HEALTH_URL=http://127.0.0.1:8000/health \
     STT_MODEL_ID=large-v3-turbo \
     STT_COMPUTE_TYPE=int8_float16 \
     STT_LANGUAGE=ko \
-    VLLM_GPU_MEMORY_UTILIZATION=0.52 \
-    VLLM_MAX_MODEL_LEN=4096 \
-    VLLM_MAX_NUM_SEQS=1 \
+    LLAMA_CTX_SIZE=4096 \
+    LLAMA_N_GPU_LAYERS=99 \
+    LLAMA_PARALLEL=1 \
     LOG_LEVEL=INFO
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-       ca-certificates curl ffmpeg libsndfile1 nginx python3-venv supervisor \
+       ca-certificates curl ffmpeg libsndfile1 nginx python3 python3-pip python3-venv supervisor \
     && rm -rf /var/lib/apt/lists/*
-
-RUN python3 -m pip install --no-cache-dir --upgrade \
-    "transformers==4.57.6"
 
 WORKDIR /opt/app
 COPY requirements-stt.txt /opt/app/requirements-stt.txt
