@@ -12,9 +12,9 @@ containers:
     containerEnvs:
       - API_KEY: "${API_KEY}"
       - LLM_MODEL_ID: "ChanLumerico/EXAONE-3.5-7.8B-Instruct-Yaho"
-      - LLM_MODEL_VARIANT: "Q4_K_M"
+      - LLM_MODEL_PATH: "/models/llm/gguf/EXAONE-3.5-7.8B-Instruct-Yaho-Q4_K_M.gguf"
       - LLM_HEALTH_URL: "http://127.0.0.1:8000/health"
-      - STT_MODEL_ID: "large-v3-turbo"
+      - STT_MODEL_ID: "/models/stt"
       - STT_COMPUTE_TYPE: "int8_float16"
       - STT_LANGUAGE: "ko"
       - LLAMA_CTX_SIZE: "4096"

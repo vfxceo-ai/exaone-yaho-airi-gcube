@@ -27,6 +27,42 @@ RUN pnpm -F @proj-airi/stage-web run build \
     && pnpm -F @proj-airi/stage-ui run story:build \
     && mv ./packages/stage-ui/.histoire/dist ./apps/stage-web/dist/ui
 
+FROM python:3.12-slim AS model-assets
+
+ARG LLM_GGUF_REPO=ChanLumerico/EXAONE-3.5-7.8B-Instruct-Yaho
+ARG LLM_GGUF_FILE=gguf/EXAONE-3.5-7.8B-Instruct-Yaho-Q4_K_M.gguf
+ARG STT_MODEL_REPO=mobiuslabsgmbh/faster-whisper-large-v3-turbo
+
+ENV HF_HOME=/tmp/huggingface \
+    XDG_CACHE_HOME=/tmp/xdg \
+    HF_HUB_DISABLE_TELEMETRY=1
+
+RUN python -m pip install --no-cache-dir --upgrade pip \
+    && python -m pip install --no-cache-dir huggingface_hub
+
+RUN python - <<'PY'
+import os
+from huggingface_hub import snapshot_download
+
+snapshot_download(
+    repo_id=os.environ["LLM_GGUF_REPO"],
+    local_dir="/opt/models/llm",
+    allow_patterns=[os.environ["LLM_GGUF_FILE"]],
+)
+
+snapshot_download(
+    repo_id=os.environ["STT_MODEL_REPO"],
+    local_dir="/opt/models/stt",
+    allow_patterns=[
+        "config.json",
+        "preprocessor_config.json",
+        "model.bin",
+        "tokenizer.json",
+        "vocabulary.*",
+    ],
+)
+PY
+
 FROM ghcr.io/ggml-org/llama.cpp:server-cuda
 
 LABEL org.opencontainers.image.title="exaone-yaho-airi-stage1" \
@@ -41,9 +77,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
     HF_HUB_CACHE=/var/cache/airi/huggingface/hub \
     XDG_CACHE_HOME=/var/cache/airi \
     LLM_MODEL_ID=ChanLumerico/EXAONE-3.5-7.8B-Instruct-Yaho \
-    LLM_MODEL_VARIANT=Q4_K_M \
+    LLM_MODEL_PATH=/models/llm/gguf/EXAONE-3.5-7.8B-Instruct-Yaho-Q4_K_M.gguf \
     LLM_HEALTH_URL=http://127.0.0.1:8000/health \
-    STT_MODEL_ID=large-v3-turbo \
+    STT_MODEL_ID=/models/stt \
     STT_COMPUTE_TYPE=int8_float16 \
     STT_LANGUAGE=ko \
     LLAMA_CTX_SIZE=4096 \
@@ -68,6 +104,7 @@ COPY nginx.conf /etc/nginx/nginx.conf
 COPY supervisord.conf /etc/supervisor/supervisord.conf
 COPY entrypoint.sh /usr/local/bin/airi-entrypoint.sh
 COPY --from=airi-build /src/airi/apps/stage-web/dist /usr/share/nginx/html
+COPY --from=model-assets /opt/models /models
 
 RUN chmod 0755 /usr/local/bin/airi-entrypoint.sh \
     && mkdir -p /var/cache/airi/huggingface /var/cache/nginx /var/lib/nginx /run

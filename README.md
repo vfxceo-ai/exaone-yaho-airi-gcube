@@ -49,9 +49,9 @@ docker build -t exaone-yaho-airi:stage1 .
 ```dotenv
 API_KEY=replace-with-a-random-url-safe-value-of-at-least-32-characters
 LLM_MODEL_ID=ChanLumerico/EXAONE-3.5-7.8B-Instruct-Yaho
-LLM_MODEL_VARIANT=Q4_K_M
+LLM_MODEL_PATH=/models/llm/gguf/EXAONE-3.5-7.8B-Instruct-Yaho-Q4_K_M.gguf
 LLM_HEALTH_URL=http://127.0.0.1:8000/health
-STT_MODEL_ID=large-v3-turbo
+STT_MODEL_ID=/models/stt
 STT_COMPUTE_TYPE=int8_float16
 STT_LANGUAGE=ko
 LLAMA_CTX_SIZE=4096
@@ -61,7 +61,8 @@ LOG_LEVEL=INFO
 ```
 
 `API_KEY` must be shared by both `/llm/v1/` and `/stt/v1/`.
-`LLM_MODEL_VARIANT=Q4_K_M` is the Stage 1 default for one RTX 5090 32 GB because the upstream model card publishes a GGUF build for llama.cpp and recommends the GGUF route when EXAONE architecture support is unstable in other runtimes.
+`LLM_MODEL_PATH` points at the GGUF file baked into the image during the GitHub Actions build.
+`STT_MODEL_ID=/models/stt` points at the faster-whisper CTranslate2 directory baked into the same image, so Stage 1 no longer depends on outbound Hugging Face access at runtime.
 
 ## AIRI provider values
 
@@ -114,6 +115,7 @@ This template is pinned to:
 For gcube manifests, keep `repo: ghcr.io` and omit the registry prefix from `containerImage`. The rendered value should be `vfxceo-ai/exaone-yaho-airi:stage1`, not `ghcr.io/vfxceo-ai/exaone-yaho-airi:stage1`.
 
 Use Dropbox only for small persistent files like future voice samples or exported config. Model caches stay on the workload-local disk under `/var/cache/airi`.
+With the offline image layout, the EXAONE GGUF and STT assets are copied into `/models` at build time instead of being downloaded during container startup.
 
 ## Stage 1 limitations
 

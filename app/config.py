@@ -19,7 +19,7 @@ class Settings:
 
         return cls(
             api_key=api_key,
-            stt_model_id=os.getenv("STT_MODEL_ID", "large-v3-turbo"),
+            stt_model_id=os.getenv("STT_MODEL_ID", "/models/stt"),
             stt_compute_type=os.getenv("STT_COMPUTE_TYPE", "int8_float16"),
             stt_language=os.getenv("STT_LANGUAGE", "ko"),
             log_level=os.getenv("LOG_LEVEL", "INFO"),

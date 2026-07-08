@@ -36,7 +36,7 @@ class SettingsContractTests(unittest.TestCase):
             settings = config.Settings.from_env()
 
         self.assertEqual(settings.api_key, VALID_API_KEY)
-        self.assertEqual(settings.stt_model_id, "large-v3-turbo")
+        self.assertEqual(settings.stt_model_id, "/models/stt")
         self.assertEqual(settings.stt_compute_type, "int8_float16")
         self.assertEqual(settings.stt_language, "ko")
         self.assertEqual(settings.log_level, "INFO")

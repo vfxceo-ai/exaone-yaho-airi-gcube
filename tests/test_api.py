@@ -37,7 +37,7 @@ class FakeSttBackend:
 def test_settings() -> Settings:
     return Settings(
         api_key=API_KEY,
-        stt_model_id="large-v3-turbo",
+        stt_model_id="/models/stt",
         stt_compute_type="int8_float16",
         stt_language="ko",
         log_level="INFO",
