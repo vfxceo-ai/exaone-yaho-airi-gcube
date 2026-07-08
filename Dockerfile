@@ -53,6 +53,9 @@ RUN apt-get update \
        ca-certificates curl ffmpeg libsndfile1 nginx python3-venv supervisor \
     && rm -rf /var/lib/apt/lists/*
 
+RUN python3 -m pip install --no-cache-dir --upgrade \
+    "transformers==4.57.6"
+
 WORKDIR /opt/app
 COPY requirements-stt.txt /opt/app/requirements-stt.txt
 RUN python3 -m venv --system-site-packages /opt/stt-venv \
