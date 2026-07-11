@@ -1,0 +1,26 @@
+description: "AIRI + EXAONE-Yaho + Korean STT + Qwen3-TTS stage 2"
+cuda: ""
+sharedMemory: 8
+
+containers:
+  - containerImage: "${GHCR_OWNER}/exaone-yaho-airi:stage2"
+    repo: ghcr.io
+    port: 8080
+    maxConnection: 20
+    containerCommand: ""
+    isCredential: true
+    containerEnvs:
+      - API_KEY: "${API_KEY}"
+      - LLAMA_CTX_SIZE: "4096"
+      - LLAMA_N_GPU_LAYERS: "99"
+      - LLAMA_PARALLEL: "1"
+      - STT_COMPUTE_TYPE: "int8_float16"
+      - TTS_REFERENCE_AUDIO: "/mnt/dropbox/gcube/AIRI/voices/yaho/reference.wav"
+      - TTS_REFERENCE_TEXT: "/mnt/dropbox/gcube/AIRI/voices/yaho/reference.txt"
+      - TTS_MAX_INPUT_CHARS: "1000"
+      - LOG_LEVEL: "INFO"
+    userStorages:
+      - "98": "/mnt/dropbox"
+
+gpuSpecs:
+  - gpuCode: "${GPU_CODE}"

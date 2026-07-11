@@ -1,4 +1,4 @@
-name: Build Stage 1 image
+name: Build Stage 2 voice image
 
 on:
   workflow_dispatch:
@@ -6,11 +6,14 @@ on:
     branches: [main]
     paths:
       - "Dockerfile"
+      - ".dockerignore"
       - "entrypoint.sh"
       - "requirements-stt.txt"
+      - "requirements-tts.txt"
       - "nginx.conf"
       - "supervisord.conf"
       - "app/**"
+      - "scripts/smoke-test.sh"
       - ".github/workflows/build.yml"
 
 permissions:
@@ -40,7 +43,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Stage 1
+      - name: Build and push Stage 2
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -50,7 +53,7 @@ jobs:
           provenance: false
           sbom: false
           tags: |
-            ghcr.io/${{ github.repository_owner }}/exaone-yaho-airi:stage1
+            ghcr.io/${{ github.repository_owner }}/exaone-yaho-airi:stage2
             ghcr.io/${{ github.repository_owner }}/exaone-yaho-airi:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=min

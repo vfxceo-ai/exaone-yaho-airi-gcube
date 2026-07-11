@@ -3,7 +3,7 @@
 .gitignore
 .dockerignore
 .env
-.venv
+.venv*
 requirements-test.txt
 *.private.yaml
 __pycache__/

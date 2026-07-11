@@ -32,6 +32,8 @@ FROM python:3.12-slim AS model-assets
 ARG LLM_GGUF_REPO=ChanLumerico/EXAONE-3.5-7.8B-Instruct-Yaho
 ARG LLM_GGUF_FILE=gguf/EXAONE-3.5-7.8B-Instruct-Yaho-Q4_K_M.gguf
 ARG STT_MODEL_REPO=mobiuslabsgmbh/faster-whisper-large-v3-turbo
+ARG TTS_CUSTOM_MODEL_REPO=Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice
+ARG TTS_CLONE_MODEL_REPO=Qwen/Qwen3-TTS-12Hz-0.6B-Base
 
 ENV HF_HOME=/tmp/huggingface \
     XDG_CACHE_HOME=/tmp/xdg \
@@ -61,12 +63,24 @@ snapshot_download(
         "vocabulary.*",
     ],
 )
+
+snapshot_download(
+    repo_id=os.environ["TTS_CUSTOM_MODEL_REPO"],
+    local_dir="/opt/models/tts/custom",
+    ignore_patterns=["*.md", ".gitattributes"],
+)
+
+snapshot_download(
+    repo_id=os.environ["TTS_CLONE_MODEL_REPO"],
+    local_dir="/opt/models/tts/base",
+    ignore_patterns=["*.md", ".gitattributes"],
+)
 PY
 
 FROM ghcr.io/ggml-org/llama.cpp:server-cuda
 
-LABEL org.opencontainers.image.title="exaone-yaho-airi-stage1" \
-      org.opencontainers.image.description="AIRI, EXAONE-Yaho llama.cpp GGUF, and Korean faster-whisper STT for gcube" \
+LABEL org.opencontainers.image.title="exaone-yaho-airi-stage2" \
+      org.opencontainers.image.description="AIRI, EXAONE-Yaho, Korean STT, and Qwen3-TTS voice cloning for gcube" \
       org.opencontainers.image.source="https://github.com/vfxceo-ai/exaone-yaho-airi-gcube" \
       org.opencontainers.image.licenses="Apache-2.0 AND MIT AND LicenseRef-EXAONE-AI-Model-License-1.1-NC"
 
@@ -76,12 +90,26 @@ ENV DEBIAN_FRONTEND=noninteractive \
     HF_HOME=/var/cache/airi/huggingface \
     HF_HUB_CACHE=/var/cache/airi/huggingface/hub \
     XDG_CACHE_HOME=/var/cache/airi \
+    TOKENIZERS_PARALLELISM=false \
+    CUDA_MODULE_LOADING=LAZY \
+    PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
     LLM_MODEL_ID=ChanLumerico/EXAONE-3.5-7.8B-Instruct-Yaho \
     LLM_MODEL_PATH=/models/llm/gguf/EXAONE-3.5-7.8B-Instruct-Yaho-Q4_K_M.gguf \
     LLM_HEALTH_URL=http://127.0.0.1:8000/health \
     STT_MODEL_ID=/models/stt \
     STT_COMPUTE_TYPE=int8_float16 \
     STT_LANGUAGE=ko \
+    TTS_CUSTOM_MODEL_ID=/models/tts/custom \
+    TTS_CLONE_MODEL_ID=/models/tts/base \
+    TTS_LANGUAGE=Korean \
+    TTS_DEFAULT_VOICE=sohee \
+    TTS_CLONE_VOICE=yaho \
+    TTS_REFERENCE_AUDIO=/mnt/dropbox/gcube/AIRI/voices/yaho/reference.wav \
+    TTS_REFERENCE_TEXT=/mnt/dropbox/gcube/AIRI/voices/yaho/reference.txt \
+    TTS_DTYPE=bfloat16 \
+    TTS_ATTENTION=sdpa \
+    TTS_DEVICE=cuda:0 \
+    TTS_MAX_INPUT_CHARS=1000 \
     LLAMA_CTX_SIZE=4096 \
     LLAMA_N_GPU_LAYERS=99 \
     LLAMA_PARALLEL=1 \
@@ -89,15 +117,20 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-       ca-certificates curl ffmpeg libsndfile1 nginx python3 python3-pip python3-venv supervisor \
+       ca-certificates curl ffmpeg libsndfile1 libsox-fmt-all nginx python3 python3-pip python3-venv sox supervisor \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/app
 COPY requirements-stt.txt /opt/app/requirements-stt.txt
-RUN python3 -m venv --system-site-packages /opt/stt-venv \
-    && /opt/stt-venv/bin/python -m pip install --no-cache-dir --upgrade pip \
-    && /opt/stt-venv/bin/python -m pip install --no-cache-dir \
-       -r /opt/app/requirements-stt.txt
+COPY requirements-tts.txt /opt/app/requirements-tts.txt
+RUN python3 -m venv /opt/voice-venv \
+    && /opt/voice-venv/bin/python -m pip install --no-cache-dir --upgrade pip \
+    && /opt/voice-venv/bin/python -m pip install --no-cache-dir \
+       torch==2.12.1 torchaudio==2.12.1 \
+       --index-url https://download.pytorch.org/whl/cu130 \
+    && /opt/voice-venv/bin/python -m pip install --no-cache-dir \
+       -r /opt/app/requirements-stt.txt \
+       -r /opt/app/requirements-tts.txt
 
 COPY app /opt/app/app
 COPY nginx.conf /etc/nginx/nginx.conf
@@ -107,7 +140,12 @@ COPY --from=airi-build /src/airi/apps/stage-web/dist /usr/share/nginx/html
 COPY --from=model-assets /opt/models /models
 
 RUN chmod 0755 /usr/local/bin/airi-entrypoint.sh \
-    && mkdir -p /var/cache/airi/huggingface /var/cache/nginx /var/lib/nginx /run
+    && mkdir -p \
+       /var/cache/airi/huggingface \
+       /var/cache/nginx \
+       /var/lib/nginx \
+       /mnt/dropbox/gcube/AIRI/voices/yaho \
+       /run
 
 EXPOSE 8080
 ENTRYPOINT ["/usr/local/bin/airi-entrypoint.sh"]

@@ -6,18 +6,31 @@ param(
 
   [Parameter(Mandatory = $true)]
   [ValidateLength(32, 256)]
-  [string]$ApiKey
+  [string]$ApiKey,
+
+  [ValidateSet('stage1', 'stage2')]
+  [string]$Stage = 'stage1',
+
+  [ValidatePattern('^[0-9]{3}$')]
+  [string]$GpuCode = ''
 )
 
 $ErrorActionPreference = 'Stop'
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$templatePath = Join-Path $projectRoot 'workload-stage1.template.yaml'
-$outputPath = Join-Path $projectRoot 'workload-stage1.private.yaml'
+$templatePath = Join-Path $projectRoot "workload-$Stage.template.yaml"
+$outputPath = Join-Path $projectRoot "workload-$Stage.private.yaml"
 $template = Get-Content -LiteralPath $templatePath -Raw
 $rendered = $template.Replace('${GHCR_OWNER}', $GhcrOwner).Replace('${API_KEY}', $ApiKey)
 
-if ($rendered.Contains('${GHCR_OWNER}') -or $rendered.Contains('${API_KEY}')) {
+if ($Stage -eq 'stage2') {
+  if ([string]::IsNullOrWhiteSpace($GpuCode)) {
+    throw 'GpuCode is required when rendering stage2.'
+  }
+  $rendered = $rendered.Replace('${GPU_CODE}', $GpuCode)
+}
+
+if ($rendered -match '\$\{[A-Z0-9_]+\}') {
   throw 'Manifest rendering left an unresolved required variable.'
 }
 

@@ -41,6 +41,22 @@ class SettingsContractTests(unittest.TestCase):
         self.assertEqual(settings.stt_language, "ko")
         self.assertEqual(settings.log_level, "INFO")
         self.assertEqual(settings.llm_health_url, "http://127.0.0.1:8000/health")
+        self.assertEqual(settings.tts_custom_model_id, "/models/tts/custom")
+        self.assertEqual(settings.tts_clone_model_id, "/models/tts/base")
+        self.assertEqual(settings.tts_language, "Korean")
+        self.assertEqual(settings.tts_default_voice, "sohee")
+        self.assertEqual(settings.tts_clone_voice, "yaho")
+        self.assertEqual(
+            settings.tts_reference_audio.as_posix(),
+            "/mnt/dropbox/gcube/AIRI/voices/yaho/reference.wav",
+        )
+        self.assertEqual(
+            settings.tts_reference_text.as_posix(),
+            "/mnt/dropbox/gcube/AIRI/voices/yaho/reference.txt",
+        )
+        self.assertEqual(settings.tts_dtype, "bfloat16")
+        self.assertEqual(settings.tts_attention, "sdpa")
+        self.assertEqual(settings.tts_max_input_chars, 1000)
 
 
 if __name__ == "__main__":
