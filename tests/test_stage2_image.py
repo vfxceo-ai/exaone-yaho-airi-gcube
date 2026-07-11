@@ -17,8 +17,8 @@ class Stage2ImageContractTests(unittest.TestCase):
     def test_dockerfile_uses_cuda_13_pytorch_wheels(self) -> None:
         text = (ROOT / "Dockerfile").read_text(encoding="utf-8")
 
-        self.assertIn("torch==2.12.1", text)
-        self.assertIn("torchaudio==2.12.1", text)
+        self.assertIn("torch==2.11.0", text)
+        self.assertIn("torchaudio==2.11.0", text)
         self.assertIn("https://download.pytorch.org/whl/cu130", text)
         self.assertIn("requirements-tts.txt", text)
 

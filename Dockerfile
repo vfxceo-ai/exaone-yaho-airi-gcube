@@ -126,7 +126,7 @@ COPY requirements-tts.txt /opt/app/requirements-tts.txt
 RUN python3 -m venv /opt/voice-venv \
     && /opt/voice-venv/bin/python -m pip install --no-cache-dir --upgrade pip \
     && /opt/voice-venv/bin/python -m pip install --no-cache-dir \
-       torch==2.12.1 torchaudio==2.12.1 \
+       torch==2.11.0 torchaudio==2.11.0 \
        --index-url https://download.pytorch.org/whl/cu130 \
     && /opt/voice-venv/bin/python -m pip install --no-cache-dir \
        -r /opt/app/requirements-stt.txt \
