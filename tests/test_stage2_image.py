@@ -33,6 +33,17 @@ class Stage2ImageContractTests(unittest.TestCase):
 
         self.assertIn("/opt/voice-venv/bin/uvicorn", text)
 
+    def test_stage_web_adds_hearing_control_patch(self) -> None:
+        dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
+        patch = (
+            ROOT / "patches" / "airi-stage-web-hearing-control.patch"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("airi-stage-web-hearing-control.patch", dockerfile)
+        self.assertIn("git apply /tmp/airi-stage-web-hearing-control.patch", dockerfile)
+        self.assertIn("HearingConfigDialog", patch)
+        self.assertIn("i-ph:microphone", patch)
+
     def test_stage2_manifest_keeps_connection_and_dropbox_contract(self) -> None:
         text = (ROOT / "workload-stage2.template.yaml").read_text(
             encoding="utf-8"

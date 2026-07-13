@@ -1,0 +1,47 @@
+diff --git a/apps/stage-web/src/pages/index.vue b/apps/stage-web/src/pages/index.vue
+--- a/apps/stage-web/src/pages/index.vue
++++ b/apps/stage-web/src/pages/index.vue
+@@ -11,9 +11,10 @@ import { BackgroundProvider } from '@proj-airi/stage-layouts/components/Backgrou
+ import { useBackgroundThemeColor } from '@proj-airi/stage-layouts/composables/theme-color'
+ import { useBackgroundStore } from '@proj-airi/stage-layouts/stores/background'
+ import { HoloCoupon } from '@proj-airi/stage-ui/components'
+ import { ViewControlSlider, WidgetStage } from '@proj-airi/stage-ui/components/scenes'
++import { HearingConfigDialog } from '@proj-airi/stage-ui/components/scenarios/dialogs'
+ import { useAudioRecorder } from '@proj-airi/stage-ui/composables/audio/audio-recorder'
+ import { useVAD } from '@proj-airi/stage-ui/stores/ai/models/vad'
+ import { useChatOrchestratorStore } from '@proj-airi/stage-ui/stores/chat'
+ import { useConsciousnessStore } from '@proj-airi/stage-ui/stores/modules/consciousness'
+ import { useHearingSpeechInputPipeline } from '@proj-airi/stage-ui/stores/modules/hearing'
+@@ -24,6 +25,7 @@ import { storeToRefs } from 'pinia'
+ import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
+ 
+ const paused = ref(false)
++const showHearingConfig = ref(false)
+ 
+ function handleSettingsOpen(open: boolean) {
+   paused.value = open
+@@ -188,8 +190,24 @@ const cursorPosition = computed(() => ({
+         </div>
+         <InteractiveArea v-if="!isMobile" h="85dvh" absolute right-4 flex flex-1 flex-col max-w="500px" min-w="30%" />
+         <MobileInteractiveArea v-if="isMobile" @settings-open="handleSettingsOpen" />
+       </div>
++      <HearingConfigDialog v-model:show="showHearingConfig" :granted="true" overlay-dim overlay-blur>
++        <button
++          type="button"
++          class="fixed bottom-5 left-5 z-50 grid h-12 w-12 place-items-center rounded-2xl border-2 border-solid backdrop-blur-md transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400/50 active:scale-95"
++          :class="enabled
++            ? 'border-primary-300/50 bg-primary-200/90 text-primary-950 hover:border-primary-400/70 dark:border-primary-400/40 dark:bg-primary-500/75 dark:text-primary-50'
++            : 'border-neutral-300/50 bg-neutral-100/80 text-neutral-700 hover:border-neutral-400/70 dark:border-neutral-700/50 dark:bg-neutral-800/80 dark:text-neutral-200'"
++          :aria-label="enabled ? 'Configure active microphone input' : 'Configure microphone input'"
++          :title="enabled ? 'Configure active microphone input' : 'Configure microphone input'"
++        >
++          <div
++            :class="enabled ? 'i-ph:microphone' : 'i-ph:microphone-slash'"
++            class="h-6 w-6"
++          />
++        </button>
++      </HearingConfigDialog>
+       <HoloCoupon />
+     </div>
+   </BackgroundProvider>
+ </template>

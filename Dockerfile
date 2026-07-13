@@ -17,6 +17,8 @@ RUN git init /src/airi \
     && git checkout --detach FETCH_HEAD
 
 WORKDIR /src/airi
+COPY patches/airi-stage-web-hearing-control.patch /tmp/airi-stage-web-hearing-control.patch
+RUN git apply /tmp/airi-stage-web-hearing-control.patch
 RUN corepack enable \
     && corepack prepare pnpm@10.33.0 --activate
 RUN --mount=type=cache,id=pnpm-store,target=/root/.pnpm-store \
